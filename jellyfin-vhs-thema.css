@@ -172,12 +172,12 @@ body, .skinBody {
     font-weight: 500;
 }
 /* Genre links als chips */
-.itemGenres a, .genresList a {
+.itemGenres a, .genresGroup .genres a {
     border: 2px solid var(--vhs-ink);
     padding: 2px 8px;
     color: var(--vhs-ink) !important;
 }
-.itemGenres a:hover, .genresList a:hover {
+.itemGenres a:hover, .genresGroup .genres a:hover {
     background: var(--vhs-ink);
     color: var(--vhs-paper) !important;
 }
@@ -207,7 +207,7 @@ body, .skinBody {
 .emby-input:focus, .emby-textarea:focus, .emby-select:focus {
     border-color: var(--vhs-pink) !important;
 }
-.emby-checkbox + span::before { border-radius: 0 !important; }
+.checkboxOutline { border-radius: 0 !important; }
 
 /* ---------- 10. SCROLLBALK ---------- */
 ::-webkit-scrollbar { width: 12px; background: var(--vhs-paper); }
