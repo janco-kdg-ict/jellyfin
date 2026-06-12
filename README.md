@@ -42,19 +42,69 @@ Alle kleuren staan bovenaan `jellyfin-vhs-thema.css` bij elkaar in het `:root` b
 
 Een variabele aanpassen verandert het overal tegelijk.
 
+## Animaties
+
+**Deze animaties zitten in het CSS-thema en werken direct**, zonder extra stappen — het zijn pure CSS-animaties en die accepteert Jellyfin gewoon via het Custom CSS veld:
+
+| Animatie | Waar je het ziet |
+|---|---|
+| Glitch op de paginatitel | bovenaan elke pagina, om de paar seconden |
+| Scheve posters die rechtspringen met een bounce | hover (of focus op TV) over een kaart |
+| Rode play-sticker die indraait | hover over een kaart |
+| Roze schaduw onder knoppen | hover over een knop |
+
+**Twee effecten uit het prototype vereisen JavaScript**, en dat accepteert het Custom CSS veld niet (Jellyfin filtert daar bewust alles behalve CSS). Daarvoor zit `extras/jellyfin-vhs-extras.js` in deze repo:
+
+- **REC indicator**: tijdens het afspelen knippert rechtsboven een rode stip met REC en de verstreken speeltijd, zoals op een opnemende videorecorder
+- **Tape laden**: bij het starten van een video schuift kort een VHS-cassette in een videorecorder, met een TRACKING-balk die vult tot de video echt speelt
+
+### JavaScript-extra's installeren (optioneel)
+
+Er zijn twee manieren; ze geven exact hetzelfde resultaat:
+
+| | Optie A: plugin | Optie B: index.html |
+|---|---|---|
+| Moeilijkheid | klikken in de webinterface | bestand bewerken op de server |
+| Overleeft een Jellyfin-update | **ja** | nee, regel opnieuw toevoegen |
+| Updates van het script uit deze repo | opnieuw plakken | komen vanzelf mee (via jsDelivr) |
+| Vereist | plugin installeren + herstart | toegang tot de bestanden van de server |
+
+Twijfel je: neem **optie A**, die overleeft updates en vraagt geen servertoegang.
+
+**Optie A - via de Custom JavaScript plugin (aanbevolen):**
+
+1. Dashboard > **Plugins** > **Catalogus** > tandwiel-icoon (**Repositories**) > **+**
+2. Geef een naam (bv. `Custom JS`) en plak als URL: `https://raw.githubusercontent.com/johnpc/jellyfin-plugin-custom-javascript/main/manifest.json`
+3. Installeer **Custom JavaScript** uit de catalogus en herstart Jellyfin
+4. Dashboard > **Plugins** > **Custom JavaScript**: plak daar de volledige inhoud van `extras/jellyfin-vhs-extras.js` en sla op
+5. Harde refresh in je browser: **Ctrl + F5**
+
+**Optie B - script-regel in index.html (geen plugin nodig):**
+
+Voeg op de server, vlak voor `</body>` in het bestand `index.html` van de webclient, deze regel toe:
+
+```html
+<script src="https://cdn.jsdelivr.net/gh/janco-kdg-ict/jellyfin@main/extras/jellyfin-vhs-extras.js" defer></script>
+```
+
+Waar dat bestand staat: `/usr/share/jellyfin/web/index.html` (Debian/Ubuntu), `/jellyfin/jellyfin-web/index.html` (Docker), of `C:\Program Files\Jellyfin\Server\jellyfin-web\index.html` (Windows). Nadeel: een Jellyfin-update overschrijft dit bestand, dan moet de regel er opnieuw in. De plugin uit optie A overleeft updates wel.
+
+De extra's zijn puur cosmetisch: het script luistert alleen mee met de videospeler en verandert niks aan het afspelen. Werkt het niet of wil je ervan af, verwijder dan de geplakte code (optie A) of de script-regel (optie B) en doe Ctrl + F5.
+
 ## Wat zit er in deze repo
 
 | Bestand | Wat het is |
 |---|---|
 | `jellyfin-vhs-thema.css` | het thema zelf, dit is wat je linkt of plakt |
+| `extras/jellyfin-vhs-extras.js` | optionele JavaScript-effecten (REC indicator, tape-laadanimatie), zie de sectie Animaties |
 | `INSTALLATIE.md` | uitgebreid stappenplan met probleemoplossing |
-| `prototype/jellyfin_vhs_prototype.html` | werkend interactief prototype van de look, opent gewoon in je browser (internet nodig voor de icoontjes). Bevat extra's zoals de tape-laadanimatie en REC teller die JavaScript vereisen en dus niet in het CSS-thema zitten |
+| `prototype/jellyfin_vhs_prototype.html` | werkend interactief prototype van de look, opent gewoon in je browser (internet nodig voor de icoontjes) |
 
 ## Beperkingen, eerlijk gezegd
 
-- Werkt in de **webinterface** (browser, desktop app, en mobiele apps die de web-UI inladen). Native apps zoals **Android TV** en **Swiftfin** hebben hun eigen interface en negeren custom CSS volledig
+- Werkt in de **webinterface** (browser, desktop app, en mobiele apps die de web-UI inladen). Native apps zoals **Android TV** en **Swiftfin** hebben hun eigen interface en negeren custom CSS (en custom JavaScript) volledig
 - Geschreven voor **Jellyfin 10.9/10.10**. Jellyfin updates kunnen class-namen wijzigen waardoor een detail kan wegvallen; meestal is dat een kleine fix
-- De JavaScript-effecten uit het prototype (REC teller, tape-in-VCR laadanimatie) kunnen niet via custom CSS. Die vereisen ofwel het injecteren van een script in de webclient, ofwel een eigen webclient op de Jellyfin API (waarvan het prototype de basis is)
+- De JavaScript-effecten (REC indicator, tape-laadanimatie) kunnen niet via het Custom CSS veld; daarvoor is de aparte installatiestap nodig uit de sectie Animaties
 
 ## Handige links
 

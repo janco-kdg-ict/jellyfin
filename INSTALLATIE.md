@@ -59,5 +59,5 @@ Maak het Custom CSS veld leeg, klik Opslaan en doe Ctrl + F5. Jellyfin staat dan
 ## Goed om te weten
 
 - Jellyfin updates kunnen class-namen in de webinterface wijzigen, waardoor een onderdeel van het thema kan wegvallen. Meestal is dat met een kleine aanpassing gefixt
-- De animaties (glitch, bounce) zijn pure CSS en kosten nauwelijks iets qua prestaties
-- Effecten die JavaScript nodig hebben uit het prototype (de REC teller, de tape-in-VCR laadanimatie) zitten niet in dit CSS-pakket, want het Custom CSS veld accepteert alleen CSS. Die kunnen later via een eigen webclient (route B) als je dat wil
+- De animaties (glitch, bounce, play-sticker) zijn pure CSS, zitten gewoon in het thema en kosten nauwelijks iets qua prestaties
+- De twee effecten die JavaScript nodig hebben (de REC indicator en de tape-in-VCR laadanimatie) zitten in `extras/jellyfin-vhs-extras.js`. Het Custom CSS veld accepteert alleen CSS, dus die installeer je apart via de Custom JavaScript plugin of een script-regel in index.html — zie de sectie **Animaties** in README.md voor het stappenplan
