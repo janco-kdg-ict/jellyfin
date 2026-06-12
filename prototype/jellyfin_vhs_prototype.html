@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jellyfin VHS Videotheek - Werkend prototype</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3/dist/tabler-icons.min.css">
+<style>
+html, body { margin:0; padding:0; background:#15111d; min-height:100%; }
+#vhs { --paper:#15111d; --ink:#FFF8E7; font-size:14px; min-height:100vh; width:100%; background:var(--paper); color:var(--ink); font-family:"Trebuchet MS", "Segoe UI", system-ui, sans-serif; transition:background .3s, color .3s, font-size .3s; }
+#vhs.vt-light { --paper:#FFF8E7; --ink:#1a1a1a; }
+#vhs, #vhs * { box-sizing:border-box; }
+.page-inner { margin:0 auto; }
+
+@keyframes chroma { 0%,92%,100% { text-shadow:0.14em 0 0 #ED93B1, -0.14em 0 0 #5DCAA5; } 94% { text-shadow:-0.21em 0 0 #ED93B1, 0.21em 0 0 #5DCAA5; } 96% { text-shadow:0.21em 0.07em 0 #ED93B1, -0.21em -0.07em 0 #5DCAA5; } }
+@keyframes blink { 0%,49% { opacity:1; } 50%,100% { opacity:0; } }
+@keyframes spin { to { transform:rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .vhs-logo { animation:none; text-shadow:0.14em 0 0 #ED93B1, -0.14em 0 0 #5DCAA5; }
+  .sleeve:hover .reel, .vcr:hover .reel { animation:none; }
+  .tape, .vcr, .front, .vt-btn, .spine { transition:none; }
+}
+.vhs-logo { animation:chroma 4s linear infinite; }
+
+/* Header */
+.vhs-header { display:flex; align-items:center; gap:0.43em; padding:1em 1.3em; border-bottom:0.21em solid var(--ink); flex-wrap:wrap; }
+.vt-nav { font-weight:500; font-size:0.93em; color:var(--ink); text-decoration:none; padding:0.43em 1em; border:0.21em solid transparent; background:transparent; cursor:pointer; font-family:inherit; }
+.vt-nav.active { background:var(--ink); color:var(--paper); }
+.vt-nav:hover, .vt-nav:focus-visible { border-color:var(--ink); outline:none; }
+.icon-box { border:0.21em solid var(--ink); width:2.4em; height:2.4em; display:flex; align-items:center; justify-content:center; background:transparent; color:var(--ink); cursor:pointer; box-shadow:0.21em 0.21em 0 var(--ink); transition:transform .15s; font-family:inherit; }
+.icon-box:hover, .icon-box:focus-visible { transform:translate(-0.14em,-0.14em); outline:none; }
+.icon-box.on { background:#ED93B1; color:#1a1a1a; }
+/* Vloeiende schaling: groeit mee met de schermbreedte, van telefoon tot 4K TV.
+   0.8vw + 2px = ~14px op 1500px breed, ~17px op 1920, ~30px (max) op 4K */
+#vhs { font-size: clamp(11px, 0.8vw + 2px, 30px); }
+.page-inner { max-width: min(82em, 96vw); }
+
+/* API dev-modus labels */
+.api-tag { display:none; font-size:0.71em; letter-spacing:0.05em; background:#0d0b0a; color:#5DCAA5; border:0.16em solid #5DCAA5; padding:0.21em 0.57em; margin:0 0 0.71em; font-family:Consolas, monospace; max-width:100%; overflow-wrap:anywhere; }
+#vhs.dev .api-tag { display:inline-block; }
+
+/* Hero: CRT TV + VCR */
+.hero-row { margin:1.6em 1.3em 0; display:flex; gap:1.43em; align-items:stretch; flex-wrap:wrap; }
+.crt { flex:1.4; min-width:16em; background:#1a1a1a; border:0.21em solid var(--ink); box-shadow:0.57em 0.57em 0 var(--ink); border-radius:1.3em; padding:1.14em 1.3em; position:relative; }
+.crt-status { display:flex; justify-content:space-between; font-size:0.79em; letter-spacing:0.18em; color:#5DCAA5; font-weight:500; }
+.rec-dot { display:inline-block; width:0.8em; height:0.8em; border-radius:50%; background:#E24B4A; animation:blink 1s steps(1) infinite; vertical-align:-0.07em; }
+.vt-tag { display:inline-block; border:0.14em solid #1a1a1a; padding:0.07em 0.5em; font-size:0.79em; font-weight:500; background:#FAC775; color:#1a1a1a; }
+.vt-btn { background:#E24B4A; color:#FFF8E7; border:0.21em solid var(--ink); box-shadow:0.29em 0.29em 0 var(--ink); padding:0.64em 1.3em; font-size:0.93em; font-weight:500; cursor:pointer; transition:transform .15s, box-shadow .15s; border-radius:0; font-family:inherit; }
+.vt-btn:hover, .vt-btn:focus-visible { transform:translate(-0.14em,-0.14em); box-shadow:0.43em 0.43em 0 #ED93B1; outline:none; }
+.player-col { flex:1; min-width:13em; display:flex; flex-direction:column; gap:0.86em; }
+.sec-label { margin:0; font-size:0.93em; font-weight:500; display:inline-block; background:var(--ink); color:var(--paper); padding:0.21em 0.71em; align-self:flex-start; }
+.vcr { border:0.21em solid var(--ink); box-shadow:0.36em 0.36em 0 var(--ink); padding:0.71em 0.86em 0.86em; position:relative; cursor:pointer; transition:box-shadow .25s, transform .25s cubic-bezier(.34,1.56,.64,1); background:#26211f; }
+.vcr:hover, .vcr:focus-visible { transform:translate(-0.21em,-0.21em); box-shadow:0.64em 0.64em 0 var(--acc); outline:none; }
+.vcr:hover .reel, .vcr:focus-visible .reel { animation:spin .8s linear infinite; }
+.vcr-row { display:flex; align-items:center; gap:0.71em; }
+.vcr-bar { margin-top:0.57em; height:0.43em; border:0.14em solid #444441; background:#0d0b0a; }
+.vcr-bar > div { height:100%; }
+
+/* VHS tapes */
+.tape-section { padding:1.86em 1.3em 0; }
+.tape-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(8.6em, 1fr)); gap:1.3em; padding:0 0.43em; }
+.sleeve { position:relative; height:12.7em; cursor:pointer; }
+.tape { position:absolute; top:2.15em; left:0.57em; right:0.57em; height:7.4em; background:#26211f; border:0.21em solid var(--ink); border-radius:0.3em 0.3em 0 0; z-index:1; transition:transform .4s cubic-bezier(.34,1.56,.64,1); }
+.sleeve:hover .tape, .sleeve:focus-visible .tape { transform:translateY(-3em) rotate(-1.5deg); }
+.sleeve:focus-visible { outline:0.16em solid #ED93B1; outline-offset:0.2em; }
+.tape-lbl { margin:0.43em 0.5em 0; background:#FFF8E7; border:0.14em solid #1a1a1a; overflow:hidden; }
+.tape-lbl .stripes { display:flex; height:0.36em; }
+.tape-lbl .stripes b { flex:1; }
+.tape-lbl p { margin:0; padding:0.14em 0.36em 0.21em; font-size:0.71em; font-weight:500; color:#1a1a1a; letter-spacing:0.05em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tape-win { margin:0.5em 0.71em 0; background:#0d0b0a; border:0.14em solid #444441; border-radius:0.21em; display:flex; justify-content:space-between; align-items:center; padding:0.29em 0.43em; position:relative; }
+.tape-win::before { content:""; position:absolute; left:1.7em; right:1.7em; top:50%; height:0.57em; margin-top:-0.29em; background:#3a3431; }
+.reel { width:1.7em; height:1.7em; border-radius:50%; border:0.14em solid #B4B2A9; background:#1a1a1a; position:relative; z-index:1; }
+.reel::before, .reel::after { content:""; position:absolute; background:#B4B2A9; }
+.reel::before { top:0.14em; bottom:0.14em; left:50%; width:0.14em; margin-left:-0.07em; }
+.reel::after { left:0.14em; right:0.14em; top:50%; height:0.14em; margin-top:-0.07em; }
+.sleeve:hover .reel, .sleeve:focus-visible .reel { animation:spin .8s linear infinite; }
+.screw { position:absolute; width:0.36em; height:0.36em; border-radius:50%; background:#5F5E5A; }
+.front { position:absolute; bottom:0; left:0; right:0; height:6.6em; border:0.21em solid var(--ink); box-shadow:0.36em 0.36em 0 var(--ink); z-index:2; display:flex; flex-direction:column; justify-content:flex-end; padding:0.57em 0.71em 0.64em; transition:box-shadow .25s; }
+.front::after { content:""; position:absolute; top:0.43em; left:0; right:0; height:0.14em; background:rgba(255,248,231,0.35); }
+.sleeve:hover .front, .sleeve:focus-visible .front { box-shadow:0.57em 0.57em 0 var(--acc); }
+.front i { font-size:1.57em; margin-bottom:0.29em; }
+.front .ttl { font-size:0.86em; font-weight:500; }
+.front .vt-tag { margin-top:0.29em; align-self:flex-start; }
+.empty-rack { padding:1.3em; border:0.21em dashed var(--ink); opacity:0.7; font-size:0.93em; }
+
+/* Genre plank */
+.genre-shelf { display:flex; gap:0.71em; flex-wrap:wrap; align-items:flex-end; padding:0 0.43em; }
+.spine { height:9.3em; width:2.7em; border:0.21em solid var(--ink); box-shadow:0.29em 0.29em 0 var(--ink); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .25s; position:relative; padding:0; font-family:inherit; }
+.spine span { writing-mode:vertical-rl; transform:rotate(180deg); font-size:0.86em; font-weight:500; letter-spacing:0.12em; color:#FFF8E7; white-space:nowrap; }
+.spine::before { content:""; position:absolute; top:0.43em; left:0.29em; right:0.29em; height:0.29em; background:#FFF8E7; opacity:0.55; }
+.spine::after { content:""; position:absolute; bottom:0.43em; left:0.29em; right:0.29em; height:0.29em; background:#FFF8E7; opacity:0.55; }
+.spine:hover, .spine:focus-visible { transform:translateY(-0.86em) rotate(-3deg); box-shadow:0.5em 0.5em 0 var(--acc); outline:none; }
+.spine.picked { transform:translateY(-0.86em) rotate(-3deg); box-shadow:0.5em 0.5em 0 var(--acc); outline:0.21em solid var(--ink); outline-offset:0.14em; }
+.shelf-plank { height:0.57em; background:#3a3431; border:0.21em solid var(--ink); margin:0 0.43em; }
+#vhs.vt-light .shelf-plank { background:#c9bfa8; }
+
+/* Footer */
+.shop-footer { margin:1.86em 1.3em 2em; border:0.21em solid var(--ink); box-shadow:0.43em 0.43em 0 var(--ink); background:#26211f; display:flex; flex-wrap:wrap; align-items:stretch; }
+.stat { flex:1; min-width:9em; padding:0.86em 1.14em; border-right:0.21em solid var(--ink); }
+.stat:last-child { border-right:none; }
+.stat .num { margin:0; font-size:1.43em; font-weight:500; color:#5DCAA5; letter-spacing:0.07em; }
+.stat .lbl { margin:0.21em 0 0; font-size:0.79em; letter-spacing:0.14em; color:#B4B2A9; }
+.online-dot { display:inline-block; width:0.6em; height:0.6em; border-radius:50%; background:#5DCAA5; animation:blink 1.6s steps(1) infinite; vertical-align:0.02em; margin-right:0.36em; }
+
+/* ===== Tape laden: overlay met VCR animatie ===== */
+.loader-overlay { position:fixed; inset:0; background:rgba(13,11,10,0.95); z-index:50; display:none; align-items:center; justify-content:center; padding:1.3em; }
+.loader-overlay.show { display:flex; }
+.load-stage { text-align:center; width:100%; max-width:30em; }
+.slot-mask { height:9.5em; overflow:hidden; position:relative; margin:0 auto; width:16em; }
+.mini-tape { position:absolute; left:50%; top:0.5em; width:13em; margin-left:-6.5em; background:#26211f; border:0.21em solid #FFF8E7; border-radius:0.3em; padding-bottom:0.6em; }
+.loader-overlay.show .mini-tape { animation:insert 1.3s cubic-bezier(.5,0,.8,.4) 0.4s forwards; }
+@keyframes insert { to { transform:translateY(125%); } }
+.vcr-face { width:16em; margin:0 auto; background:#1a1a1a; border:0.21em solid #FFF8E7; border-radius:0.4em; padding:1em 1.3em 1.14em; position:relative; z-index:2; }
+.vcr-slit { height:0.86em; background:#0d0b0a; border:0.16em solid #444441; border-radius:0.21em; }
+.vcr-leds { display:flex; justify-content:space-between; margin-top:0.71em; font-size:0.79em; letter-spacing:0.18em; color:#5DCAA5; font-weight:500; }
+.load-txt { font-size:1.07em; font-weight:500; letter-spacing:0.25em; color:#FFF8E7; margin:1.3em 0 0.86em; }
+.load-txt .dots::after { content:""; animation:dots 1.2s steps(4) infinite; }
+@keyframes dots { 0% { content:""; } 25% { content:"."; } 50% { content:".."; } 75% { content:"..."; } }
+.track-bar { height:0.71em; border:0.16em solid #FFF8E7; background:#0d0b0a; width:16em; margin:0 auto; }
+.track-bar > div { height:100%; width:0%; background:#5DCAA5; transition:width .15s steps(3); }
+.track-lbl { font-size:0.71em; letter-spacing:0.2em; color:#B4B2A9; margin-top:0.5em; }
+
+/* Detailpagina in de overlay */
+.detail-stage { display:none; width:100%; max-width:52em; background:#1a1a1a; border:0.21em solid #FFF8E7; box-shadow:0.57em 0.57em 0 #FFF8E7; border-radius:1.3em; padding:1.6em 1.86em; animation:chromain .35s ease; }
+@keyframes chromain { from { transform:translateY(1em); opacity:0; } to { transform:translateY(0); opacity:1; } }
+.detail-flex { display:flex; gap:1.86em; flex-wrap:wrap; align-items:flex-start; }
+.detail-tape { flex:0 0 14em; }
+.detail-tape .tape { position:static; height:auto; padding-bottom:0.71em; }
+.detail-tape .reel { animation:spin 1.4s linear infinite; }
+.detail-info { flex:1; min-width:15em; }
+.detail-genres { display:flex; gap:0.5em; flex-wrap:wrap; margin:0.71em 0 1em; }
+.genre-chip { border:0.16em solid #FFF8E7; background:transparent; color:#FFF8E7; padding:0.21em 0.71em; font-size:0.79em; font-weight:500; letter-spacing:0.07em; cursor:pointer; font-family:inherit; }
+.genre-chip:hover, .genre-chip:focus-visible { background:#FFF8E7; color:#1a1a1a; outline:none; }
+.detail-overview { font-size:0.93em; line-height:1.6; color:#D3D1C7; margin:0 0 1.3em; }
+.eject-btn { background:transparent; color:#FFF8E7; border:0.21em solid #FFF8E7; box-shadow:0.29em 0.29em 0 #FFF8E7; padding:0.64em 1.3em; font-size:0.93em; font-weight:500; cursor:pointer; transition:transform .15s, box-shadow .15s; font-family:inherit; margin-left:0.71em; }
+.eject-btn:hover, .eject-btn:focus-visible { transform:translate(-0.14em,-0.14em); box-shadow:0.43em 0.43em 0 #5DCAA5; outline:none; }
+</style>
+</head>
+<body>
+<div id="vhs">
+<div class="page-inner">
+
+<header class="vhs-header">
+  <span class="vhs-logo" style="font-size:1.43em; font-weight:500; letter-spacing:0.05em; margin-right:0.5em;">JELLYFIN</span>
+  <button class="vt-nav active" data-view="home">Home</button>
+  <button class="vt-nav" data-view="Movie">Films</button>
+  <button class="vt-nav" data-view="Series">Series</button>
+  <button class="vt-nav" data-view="MusicAlbum">Muziek</button>
+  <span style="margin-left:auto; display:flex; gap:0.57em; align-items:center; flex-wrap:wrap;">
+    <button class="icon-box" id="dev-toggle" aria-label="Toon API endpoints" title="Toon waar elke sectie zijn data vandaan haalt"><i class="ti ti-code" aria-hidden="true" style="font-size:1.14em;"></i></button>
+    <button id="vhs-toggle" class="icon-box" style="background:#534AB7; color:#FFF8E7;" aria-label="Licht aan of uit"><i class="ti ti-bulb" id="vhs-toggle-icon" aria-hidden="true" style="font-size:1.14em;"></i></button>
+  </span>
+</header>
+
+<!-- HOME: hero + nog in de speler -->
+<div class="hero-row" id="hero-row">
+  <div class="crt">
+    <div class="crt-status">
+      <span>AV-1</span>
+      <span><span class="rec-dot"></span> REC <span id="vhs-rec">00:00:00</span></span>
+    </div>
+    <p class="vhs-logo" id="hero-title" style="margin:0.64em 0 0.14em; font-size:2em; font-weight:500; color:#FFF8E7; letter-spacing:-0.02em;"></p>
+    <p id="hero-meta" style="margin:0 0 1.14em; font-size:0.93em; color:#B4B2A9;"></p>
+    <button class="vt-btn"><i class="ti ti-player-play" aria-hidden="true" style="font-size:1em; vertical-align:-0.14em;"></i> PLAY &#9656;</button>
+  </div>
+  <div class="player-col">
+    <span class="api-tag">GET /UserItems/Resume?limit=2</span>
+    <p class="sec-label" style="transform:rotate(-1.5deg);">NOG IN DE SPELER</p>
+    <div id="resume-list" style="flex:1; display:flex; flex-direction:column; gap:0.86em;"></div>
+  </div>
+</div>
+
+<!-- Tape rek (gevuld vanuit data) -->
+<section class="tape-section">
+  <span class="api-tag" id="rack-api"></span><br>
+  <p class="sec-label" id="rack-label" style="font-size:1.07em; padding:0.29em 0.86em; transform:rotate(0.8deg); margin-bottom:1.3em;"></p>
+  <div class="tape-grid" id="tape-grid"></div>
+</section>
+
+<!-- Genre plank (gevuld vanuit data) -->
+<section class="tape-section">
+  <span class="api-tag">GET /Genres?userId=...</span><br>
+  <p class="sec-label" style="font-size:1.07em; padding:0.29em 0.86em; transform:rotate(-0.8deg); margin-bottom:1.3em;">BLADER PER GENRE</p>
+  <div class="genre-shelf" id="genre-shelf"></div>
+  <div class="shelf-plank"></div>
+</section>
+
+<!-- Footer met tellingen uit data -->
+<footer class="shop-footer">
+  <span class="api-tag" style="position:absolute;">GET /Items/Counts</span>
+  <div class="stat"><p class="num"><span class="online-dot"></span>ONLINE</p><p class="lbl">SERVER STATUS</p></div>
+  <div class="stat"><p class="num" id="count-movies">0</p><p class="lbl">FILMS</p></div>
+  <div class="stat"><p class="num" id="count-series">0</p><p class="lbl">SERIES</p></div>
+  <div class="stat"><p class="num" id="count-albums">0</p><p class="lbl">ALBUMS</p></div>
+  <div class="stat"><p class="num" style="color:#FAC775;">03:12</p><p class="lbl">LAATSTE SCAN</p></div>
+</footer>
+
+<!-- Overlay: tape laden + detailpagina -->
+<div class="loader-overlay" id="loader" role="dialog" aria-modal="true" aria-label="Titel laden">
+
+  <div class="load-stage" id="load-stage">
+    <span class="api-tag" id="detail-api-load"></span>
+    <div class="slot-mask">
+      <div class="mini-tape" id="mini-tape">
+        <div class="tape-lbl"><div class="stripes"><b style="background:#E24B4A;"></b><b style="background:#FAC775;"></b><b style="background:#378ADD;"></b></div><p id="mini-tape-name"></p></div>
+        <div class="tape-win"><span class="reel"></span><span class="reel"></span></div>
+      </div>
+    </div>
+    <div class="vcr-face">
+      <div class="vcr-slit"></div>
+      <div class="vcr-leds"><span><span class="rec-dot" style="background:#5DCAA5;"></span> LOAD</span><span id="vcr-led-name">SP</span></div>
+    </div>
+    <p class="load-txt">TAPE LADEN<span class="dots"></span></p>
+    <div class="track-bar"><div id="track-fill"></div></div>
+    <p class="track-lbl">TRACKING AFSTEMMEN</p>
+  </div>
+
+  <div class="detail-stage" id="detail-stage">
+    <span class="api-tag" id="detail-api"></span>
+    <div class="detail-flex">
+      <div class="detail-tape">
+        <div class="tape">
+          <span class="screw" style="top:0.29em; left:0.29em;"></span><span class="screw" style="top:0.29em; right:0.29em;"></span>
+          <div class="tape-lbl"><div class="stripes"><b style="background:#E24B4A;"></b><b style="background:#FAC775;"></b><b style="background:#378ADD;"></b></div><p id="detail-tape-name"></p></div>
+          <div class="tape-win"><span class="reel"></span><span class="reel"></span></div>
+        </div>
+      </div>
+      <div class="detail-info">
+        <p class="vhs-logo" id="detail-title" style="margin:0; font-size:1.86em; font-weight:500; color:#FFF8E7; letter-spacing:-0.02em;"></p>
+        <p id="detail-meta" style="margin:0.36em 0 0; font-size:0.93em; color:#B4B2A9;"></p>
+        <div class="detail-genres" id="detail-genres"></div>
+        <p class="detail-overview" id="detail-overview"></p>
+        <button class="vt-btn" style="--ink:#FFF8E7;"><i class="ti ti-player-play" aria-hidden="true" style="font-size:1em; vertical-align:-0.14em;"></i> AFSPELEN</button>
+        <button class="eject-btn" id="eject-btn"><i class="ti ti-player-eject" aria-hidden="true" style="font-size:1em; vertical-align:-0.14em;"></i> EJECT</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</div>
+</div>
+
+<script>
+/* ============================================================
+   MOCK DATA-LAAG
+   Dit object bootst na wat de Jellyfin REST API teruggeeft.
+   In de echte versie vervang je elke MOCK_* door een fetch()
+   naar je eigen server, bv:
+   fetch('http://jouwserver:8096/UserItems/Resume?userId=...',
+         { headers: { 'Authorization': 'MediaBrowser Token=...' }})
+   De veldnamen hieronder (Name, Type, ProductionYear, Genres,
+   UserData) zijn exact de namen die Jellyfin zelf gebruikt.
+   ============================================================ */
+
+// GET /UserItems/Resume  →  "Nog in de speler"
+const MOCK_RESUME = [
+  { Name: "Dune deel 3", Pos: "01:24:09", UserData: { PlayedPercentage: 65 }, acc: "#5DCAA5" },
+  { Name: "Severance S03E04", Pos: "00:16:42", UserData: { PlayedPercentage: 30 }, acc: "#FAC775" }
+];
+
+// GET /Users/{id}/Items/Latest  →  "Nieuw in de rekken"
+// Type en Genres zijn echte Jellyfin velden; de kleuren zijn thema-extra's
+const MOCK_ITEMS = [
+  { Name: "Interstellar",   Type: "Movie",      ProductionYear: 2014, Genres: ["Sci-Fi","Drama"],    front:"#534AB7", icon:"#CECBF6", txt:"#EEEDFE", acc:"#AFA9EC", tag:"2014" },
+  { Name: "The Batman 2",   Type: "Movie",      ProductionYear: 2026, Genres: ["Actie","Thriller"],  front:"#854F0B", icon:"#FAC775", txt:"#FAEEDA", acc:"#FAC775", tag:"2026", tagbg:"#F09595" },
+  { Name: "Oppenheimer",    Type: "Movie",      ProductionYear: 2023, Genres: ["Drama"],             front:"#993556", icon:"#F4C0D1", txt:"#FBEAF0", acc:"#ED93B1", tag:"2023" },
+  { Name: "Blade Runner",   Type: "Movie",      ProductionYear: 1982, Genres: ["Sci-Fi","Thriller"], front:"#26215C", icon:"#CECBF6", txt:"#EEEDFE", acc:"#CECBF6", tag:"1982" },
+  { Name: "Dune deel 3",    Type: "Movie",      ProductionYear: 2026, Genres: ["Sci-Fi","Actie"],    front:"#0F6E56", icon:"#9FE1CB", txt:"#E1F5EE", acc:"#5DCAA5", tag:"2026" },
+  { Name: "Hot Fuzz",       Type: "Movie",      ProductionYear: 2007, Genres: ["Komedie","Actie"],   front:"#A33B1F", icon:"#F5C4B3", txt:"#FAECE7", acc:"#F0997B", tag:"2007" },
+  { Name: "Arcane S2",      Type: "Series",     ProductionYear: 2024, Genres: ["Animatie","Actie"],  front:"#993C1D", icon:"#F5C4B3", txt:"#FAECE7", acc:"#F0997B", tag:"SERIE", tagbg:"#9FE1CB" },
+  { Name: "The Bear S4",    Type: "Series",     ProductionYear: 2026, Genres: ["Drama","Komedie"],   front:"#0C447C", icon:"#B5D4F4", txt:"#E6F1FB", acc:"#378ADD", tag:"SERIE", tagbg:"#9FE1CB" },
+  { Name: "Severance S3",   Type: "Series",     ProductionYear: 2026, Genres: ["Thriller","Drama"],  front:"#26215C", icon:"#CECBF6", txt:"#EEEDFE", acc:"#CECBF6", tag:"SERIE", tagbg:"#9FE1CB" },
+  { Name: "Planet Earth IV",Type: "Series",     ProductionYear: 2025, Genres: ["Docu","Familie"],    front:"#0F6E56", icon:"#9FE1CB", txt:"#E1F5EE", acc:"#9FE1CB", tag:"DOCU", tagbg:"#9FE1CB" },
+  { Name: "Live in Gent",   Type: "MusicAlbum", ProductionYear: 2025, Genres: ["Muziek"],            front:"#085041", icon:"#9FE1CB", txt:"#E1F5EE", acc:"#5DCAA5", tag:"MUZIEK", tagbg:"#CECBF6" },
+  { Name: "Synth Tapes Vol.1", Type: "MusicAlbum", ProductionYear: 2024, Genres: ["Muziek"],         front:"#534AB7", icon:"#CECBF6", txt:"#EEEDFE", acc:"#AFA9EC", tag:"MUZIEK", tagbg:"#CECBF6" },
+  { Name: "F1: Spa 2026",   Type: "Video",      ProductionYear: 2026, Genres: ["Sport"],             front:"#A33B1F", icon:"#FAC775", txt:"#FAECE7", acc:"#FAC775", tag:"SPORT" },
+  { Name: "Home Video 2025",Type: "Video",      ProductionYear: 2025, Genres: ["Familie"],           front:"#7F2231", icon:"#F4C0D1", txt:"#FBEAF0", acc:"#F09595", tag:"EIGEN", tagbg:"#F09595" }
+];
+
+// GET /Genres  →  genre plank (kleuren zijn thema-extra's)
+const MOCK_GENRES = [
+  { Name:"Actie",    bg:"#993C1D", acc:"#E24B4A" },
+  { Name:"Sci-Fi",   bg:"#534AB7", acc:"#AFA9EC" },
+  { Name:"Drama",    bg:"#993556", acc:"#ED93B1" },
+  { Name:"Komedie",  bg:"#854F0B", acc:"#FAC775" },
+  { Name:"Docu",     bg:"#085041", acc:"#5DCAA5" },
+  { Name:"Animatie", bg:"#0C447C", acc:"#378ADD" },
+  { Name:"Thriller", bg:"#26215C", acc:"#CECBF6" },
+  { Name:"Familie",  bg:"#0F6E56", acc:"#9FE1CB" },
+  { Name:"Muziek",   bg:"#7F2231", acc:"#F09595" },
+  { Name:"Sport",    bg:"#712B13", acc:"#F0997B" }
+];
+
+// "Uitgelicht" in de CRT  →  in het echt bv. het nieuwste item
+const MOCK_FEATURED = { Name:"THE GRAND VOYAGE", Genres:["Avontuur"], ProductionYear:2026, RunTime:"2u 14m" };
+
+/* ============================================================
+   RENDER LAAG: bouwt de interface op uit de data hierboven
+   ============================================================ */
+const typeIcon = { Movie:"ti-movie", Series:"ti-device-tv", MusicAlbum:"ti-music", Video:"ti-video" };
+let view = "home";       // home | Movie | Series | MusicAlbum
+let genreFilter = null;  // bv. "Sci-Fi" of null
+
+function sleeveHTML(it) {
+  return `
+  <div class="sleeve" style="--acc:${it.acc};" tabindex="0" role="button" data-name="${it.Name}" aria-label="Open ${it.Name}">
+    <div class="tape">
+      <span class="screw" style="top:0.29em; left:0.29em;"></span><span class="screw" style="top:0.29em; right:0.29em;"></span>
+      <div class="tape-lbl"><div class="stripes"><b style="background:#E24B4A;"></b><b style="background:#FAC775;"></b><b style="background:#378ADD;"></b></div><p>${it.Name.toUpperCase()}</p></div>
+      <div class="tape-win"><span class="reel"></span><span class="reel"></span></div>
+    </div>
+    <div class="front" style="background:${it.front};">
+      <i class="ti ${typeIcon[it.Type] || "ti-movie"}" aria-hidden="true" style="color:${it.icon};"></i>
+      <span class="ttl" style="color:${it.txt};">${it.Name}</span>
+      <span class="vt-tag"${it.tagbg ? ` style="background:${it.tagbg};"` : ""}>${it.tag}</span>
+    </div>
+  </div>`;
+}
+
+function renderResume() {
+  document.getElementById("resume-list").innerHTML = MOCK_RESUME.map(r => `
+    <div class="vcr" style="--acc:${r.acc}; flex:1;" tabindex="0">
+      <div class="vcr-row">
+        <span class="reel" style="flex-shrink:0;"></span>
+        <div style="flex:1; min-width:0;">
+          <p style="margin:0; font-size:0.86em; font-weight:500; color:#FFF8E7;">${r.Name}</p>
+          <p style="margin:0.14em 0 0; font-size:0.79em; color:${r.acc}; letter-spacing:0.09em;">${r.Pos}</p>
+        </div>
+        <span class="reel" style="flex-shrink:0;"></span>
+      </div>
+      <div class="vcr-bar"><div style="width:${r.UserData.PlayedPercentage}%; background:${r.acc};"></div></div>
+    </div>`).join("");
+}
+
+function renderHero() {
+  document.getElementById("hero-title").textContent = MOCK_FEATURED.Name;
+  document.getElementById("hero-meta").innerHTML =
+    `${MOCK_FEATURED.Genres[0]} &middot; ${MOCK_FEATURED.ProductionYear} &middot; ${MOCK_FEATURED.RunTime} &middot; <span class="vt-tag" style="transform:rotate(-2deg);">4K</span>`;
+}
+
+function renderRack() {
+  // In het echt: /Items/Latest voor home, /Items?includeItemTypes=Movie&genres=... voor de rest
+  let items = MOCK_ITEMS.slice();
+  let label = "NIEUW IN DE REKKEN";
+  let api = "GET /Users/{id}/Items/Latest?limit=16";
+  if (view !== "home") {
+    items = items.filter(i => i.Type === view);
+    label = { Movie:"FILMS IN DE REKKEN", Series:"SERIES IN DE REKKEN", MusicAlbum:"MUZIEK IN DE REKKEN" }[view];
+    api = `GET /Items?includeItemTypes=${view}&recursive=true`;
+  }
+  if (genreFilter) {
+    items = items.filter(i => i.Genres.includes(genreFilter));
+    label += ` &middot; ${genreFilter.toUpperCase()}`;
+    api += `&genres=${genreFilter}`;
+  }
+  document.getElementById("rack-label").innerHTML = label;
+  document.getElementById("rack-api").textContent = api;
+  document.getElementById("tape-grid").innerHTML = items.length
+    ? items.map(sleeveHTML).join("")
+    : `<p class="empty-rack">Geen tapes in dit rek. Probeer een ander genre of zet de filter af door nog eens op het genre te klikken.</p>`;
+  // Elke tape klikbaar maken (klik of Enter) → detailpagina laden
+  document.querySelectorAll("#tape-grid .sleeve").forEach(el => {
+    el.addEventListener("click", () => openItem(el.dataset.name));
+    el.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openItem(el.dataset.name); } });
+  });
+}
+
+function renderGenres() {
+  document.getElementById("genre-shelf").innerHTML = MOCK_GENRES.map(g => `
+    <button class="spine${genreFilter === g.Name ? " picked" : ""}" style="--acc:${g.acc}; background:${g.bg};" data-genre="${g.Name}">
+      <span>${g.Name.toUpperCase()}</span>
+    </button>`).join("");
+  document.querySelectorAll(".spine").forEach(s => s.addEventListener("click", () => {
+    genreFilter = (genreFilter === s.dataset.genre) ? null : s.dataset.genre;
+    renderRack(); renderGenres();
+  }));
+}
+
+function renderCounts() {
+  // In het echt komt dit kant-en-klaar uit GET /Items/Counts
+  document.getElementById("count-movies").textContent = MOCK_ITEMS.filter(i => i.Type === "Movie").length;
+  document.getElementById("count-series").textContent = MOCK_ITEMS.filter(i => i.Type === "Series").length;
+  document.getElementById("count-albums").textContent = MOCK_ITEMS.filter(i => i.Type === "MusicAlbum").length;
+}
+
+/* Navigatie: Home / Films / Series / Muziek */
+document.querySelectorAll(".vt-nav").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll(".vt-nav").forEach(x => x.classList.remove("active"));
+  b.classList.add("active");
+  view = b.dataset.view;
+  genreFilter = null;
+  document.getElementById("hero-row").style.display = (view === "home") ? "flex" : "none";
+  renderRack(); renderGenres();
+}));
+
+/* Dev-modus: toon per sectie het API endpoint */
+const vhs = document.getElementById("vhs");
+document.getElementById("dev-toggle").addEventListener("click", e => {
+  vhs.classList.toggle("dev");
+  e.currentTarget.classList.toggle("on");
+});
+
+/* Licht aan/uit */
+const vbtn = document.getElementById("vhs-toggle");
+const vicon = document.getElementById("vhs-toggle-icon");
+vbtn.addEventListener("click", () => {
+  vhs.classList.toggle("vt-light");
+  const light = vhs.classList.contains("vt-light");
+  vicon.className = light ? "ti ti-bulb-off" : "ti ti-bulb";
+  vbtn.style.background = light ? "#FAC775" : "#534AB7";
+  vbtn.style.color = light ? "#1a1a1a" : "#FFF8E7";
+  document.body.style.background = light ? "#FFF8E7" : "#15111d";
+});
+
+/* ============================================================
+   TAPE LADEN + DETAILPAGINA
+   In het echt haal je de detailgegevens op met:
+   GET /Users/{userId}/Items/{itemId}
+   Die response bevat o.a. Name, Overview (de samenvatting),
+   Genres, ProductionYear, RunTimeTicks en People (cast).
+   De laadanimatie speel je gewoon af terwijl die fetch loopt.
+   ============================================================ */
+const typeWoord = { Movie:"Film", Series:"Serie", MusicAlbum:"Album", Video:"Video" };
+
+// Nep-samenvattingen; in het echt is dit het veld "Overview" uit de API
+const MOCK_OVERVIEWS = {
+  "Arcane S2": "Terwijl de kloof tussen Piltover en Zaun groter wordt, kiezen twee zussen elk een kant in een oorlog die hun stad voorgoed zal veranderen.",
+  "Interstellar": "Een groep ontdekkingsreizigers reist door een wormgat op zoek naar een nieuwe thuis voor de mensheid.",
+  "The Bear S4": "Carmy en het team van The Bear jagen op hun Michelinster terwijl de keuken, en de familie, op springen staat."
+};
+
+const loader = document.getElementById("loader");
+const loadStage = document.getElementById("load-stage");
+const detailStage = document.getElementById("detail-stage");
+let trackTimer = null;
+
+function openItem(name) {
+  const it = MOCK_ITEMS.find(i => i.Name === name);
+  if (!it) return;
+
+  // Stap 1: laadscherm tonen, tape de VCR in
+  loader.classList.add("show");
+  loadStage.style.display = "block";
+  detailStage.style.display = "none";
+  document.getElementById("mini-tape-name").textContent = it.Name.toUpperCase();
+  document.getElementById("vcr-led-name").textContent = (typeWoord[it.Type] || "SP").toUpperCase();
+  document.getElementById("detail-api-load").textContent = `GET /Users/{id}/Items/{${it.Name.replace(/\s/g,"")}Id}`;
+  // Insert-animatie herstarten
+  const tape = document.getElementById("mini-tape");
+  tape.style.animation = "none"; void tape.offsetWidth; tape.style.animation = "";
+
+  // Stap 2: tracking balk vullen (in het echt: zolang de fetch bezig is)
+  const fill = document.getElementById("track-fill");
+  fill.style.width = "0%";
+  let pct = 0;
+  clearInterval(trackTimer);
+  trackTimer = setInterval(() => {
+    pct = Math.min(100, pct + 8 + Math.random() * 18); // hapert een beetje, zoals echte tracking
+    fill.style.width = pct + "%";
+    if (pct >= 100) { clearInterval(trackTimer); setTimeout(() => showDetail(it), 250); }
+  }, 180);
+}
+
+function showDetail(it) {
+  // Stap 3: detailpagina vullen vanuit de data en tonen
+  loadStage.style.display = "none";
+  detailStage.style.display = "block";
+  document.getElementById("detail-api").textContent = `GET /Users/{id}/Items/{${it.Name.replace(/\s/g,"")}Id}  →  Name, Overview, Genres, RunTimeTicks`;
+  document.getElementById("detail-tape-name").textContent = it.Name.toUpperCase();
+  document.getElementById("detail-title").textContent = it.Name.toUpperCase();
+  document.getElementById("detail-meta").textContent = `${typeWoord[it.Type] || it.Type} · ${it.ProductionYear}`;
+  document.getElementById("detail-genres").innerHTML = it.Genres.map(g => `<button class="genre-chip" data-genre="${g}">${g.toUpperCase()}</button>`).join("");
+  document.getElementById("detail-overview").textContent =
+    MOCK_OVERVIEWS[it.Name] || `${it.Name} (${it.ProductionYear}) staat klaar in je bibliotheek. In de echte versie staat hier de samenvatting uit het Overview-veld van de Jellyfin API.`;
+  // Genre chips: klikken = overlay dicht en filteren op dat genre
+  document.querySelectorAll("#detail-genres .genre-chip").forEach(c => c.addEventListener("click", () => {
+    genreFilter = c.dataset.genre;
+    closeLoader(); renderRack(); renderGenres();
+  }));
+}
+
+function closeLoader() { loader.classList.remove("show"); clearInterval(trackTimer); }
+document.getElementById("eject-btn").addEventListener("click", closeLoader);
+loader.addEventListener("click", e => { if (e.target === loader) closeLoader(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeLoader(); });
+
+/* REC teller */
+let s = 0;
+setInterval(() => {
+  s++;
+  const h = String(Math.floor(s/3600)).padStart(2,"0");
+  const m = String(Math.floor((s%3600)/60)).padStart(2,"0");
+  const ss = String(s%60).padStart(2,"0");
+  document.getElementById("vhs-rec").textContent = `${h}:${m}:${ss}`;
+}, 1000);
+
+/* Eerste render */
+renderHero(); renderResume(); renderRack(); renderGenres(); renderCounts();
+</script>
+</body>
+</html>
