@@ -60,6 +60,17 @@ Een variabele aanpassen verandert het overal tegelijk.
 
 ### JavaScript-extra's installeren (optioneel)
 
+Er zijn twee manieren; ze geven exact hetzelfde resultaat:
+
+| | Optie A: plugin | Optie B: index.html |
+|---|---|---|
+| Moeilijkheid | klikken in de webinterface | bestand bewerken op de server |
+| Overleeft een Jellyfin-update | **ja** | nee, regel opnieuw toevoegen |
+| Updates van het script uit deze repo | opnieuw plakken | komen vanzelf mee (via jsDelivr) |
+| Vereist | plugin installeren + herstart | toegang tot de bestanden van de server |
+
+Twijfel je: neem **optie A**, die overleeft updates en vraagt geen servertoegang.
+
 **Optie A - via de Custom JavaScript plugin (aanbevolen):**
 
 1. Dashboard > **Plugins** > **Catalogus** > tandwiel-icoon (**Repositories**) > **+**
