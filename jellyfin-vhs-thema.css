@@ -1,0 +1,234 @@
+/* ============================================================
+   JELLYFIN VHS VIDEOTHEEK THEMA
+   Versie 1.0 - voor Jellyfin 10.9/10.10 webclient
+
+   Installeren (twee opties):
+   1. Plak de volledige inhoud van dit bestand in
+      Dashboard > Algemeen > Aangepaste CSS
+   2. Of plak alleen deze regel (repo moet publiek staan):
+      @import url("https://cdn.jsdelivr.net/gh/janco-kdg-ict/jellyfin@main/jellyfin-vhs-thema.css");
+   Zie INSTALLATIE.md voor het volledige stappenplan.
+   ============================================================
+
+   Werkt in: de webinterface (browser), de desktop app en apps
+   die de webclient inladen.
+   Werkt NIET in: native apps met eigen interface (bv. de
+   Android TV app, Swiftfin op Apple TV). Op een TV gebruik je
+   dus best de browser of een app die de web-UI toont.
+   ============================================================ */
+
+/* ---------- 1. KLEUREN: pas hier je thema aan ---------- */
+:root {
+    --vhs-paper: #15111d;   /* achtergrond (donkerpaars-zwart) */
+    --vhs-ink: #FFF8E7;     /* randen en tekst (creme) */
+    --vhs-panel: #26211f;   /* panelen en kaarten */
+    --vhs-red: #E24B4A;     /* play knoppen */
+    --vhs-pink: #ED93B1;    /* hover accent */
+    --vhs-green: #5DCAA5;   /* VCR display groen */
+    --vhs-amber: #FAC775;   /* tags en badges */
+    --vhs-border: 3px;      /* dikte van de randen */
+}
+
+/* ---------- 2. BASIS: achtergrond en lettertype ---------- */
+html, body, .backgroundContainer, .skinBody {
+    background: var(--vhs-paper) !important;
+    color: var(--vhs-ink);
+}
+body, .skinBody {
+    font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif !important;
+}
+/* Backdrop afbeeldingen dempen zodat de look donker blijft */
+.backdropImage { opacity: 0.25; }
+
+/* ---------- 3. HEADER ---------- */
+.skinHeader, .skinHeader-withBackground {
+    background: var(--vhs-paper) !important;
+    border-bottom: var(--vhs-border) solid var(--vhs-ink);
+    backdrop-filter: none;
+}
+/* Glitch effect op de paginatitel, zoals het logo in de mockup */
+@keyframes vhs-chroma {
+    0%, 92%, 100% { text-shadow: 2px 0 0 var(--vhs-pink), -2px 0 0 var(--vhs-green); }
+    94% { text-shadow: -3px 0 0 var(--vhs-pink), 3px 0 0 var(--vhs-green); }
+    96% { text-shadow: 3px 1px 0 var(--vhs-pink), -3px -1px 0 var(--vhs-green); }
+}
+.pageTitle { animation: vhs-chroma 4s linear infinite; letter-spacing: 0.05em; }
+/* Tabbladen (Films / Series / ...) als brutalist knoppen */
+.emby-tab-button {
+    color: var(--vhs-ink);
+    border: var(--vhs-border) solid transparent;
+    border-radius: 0;
+}
+.emby-tab-button:hover { border-color: var(--vhs-ink); }
+.emby-tab-button-active, .emby-tab-button.emby-tab-button-active {
+    background: var(--vhs-ink) !important;
+    color: var(--vhs-paper) !important;
+    border-radius: 0;
+}
+.emby-tab-button-active .emby-button-foreground { color: var(--vhs-paper); }
+
+/* ---------- 4. SECTIETITELS als scheve labels ---------- */
+.sectionTitle {
+    display: inline-block;
+    background: var(--vhs-ink);
+    color: var(--vhs-paper);
+    padding: 0.2em 0.7em;
+    transform: rotate(-1deg);
+    font-weight: 500;
+}
+.verticalSection:nth-child(even) .sectionTitle { transform: rotate(0.8deg); }
+
+/* ---------- 5. KAARTEN (posters) als videotheek hoezen ---------- */
+.cardBox { border-radius: 0 !important; }
+.cardImageContainer, .cardContent {
+    border-radius: 0 !important;
+}
+.card .cardBox {
+    border: var(--vhs-border) solid var(--vhs-ink);
+    box-shadow: 5px 5px 0 var(--vhs-ink);
+    background: var(--vhs-panel);
+    transition: transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .25s ease;
+}
+/* Tapes hangen elk een tikje scheef, zoals in de mockup */
+.card:nth-child(odd) .cardBox { transform: rotate(-1deg); }
+.card:nth-child(even) .cardBox { transform: rotate(0.9deg); }
+.card:nth-child(3n) .cardBox { transform: rotate(-0.5deg); }
+/* Hover: rechtspringen met bounce en roze schaduw */
+.card:hover .cardBox, .card:focus-within .cardBox {
+    transform: rotate(0deg) translate(-4px, -4px) !important;
+    box-shadow: 9px 9px 0 var(--vhs-pink);
+}
+/* Tekst onder de kaart */
+.cardText { color: var(--vhs-ink); }
+.cardText-secondary { color: var(--vhs-amber) !important; }
+
+/* Play overlay knop op kaarten: de rode sticker */
+.cardOverlayButton, .cardOverlayFab-primary {
+    background: var(--vhs-red) !important;
+    border: var(--vhs-border) solid var(--vhs-ink) !important;
+    color: var(--vhs-ink) !important;
+    border-radius: 50%;
+    transform: scale(0) rotate(-35deg);
+    transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+.card:hover .cardOverlayButton, .card:hover .cardOverlayFab-primary {
+    transform: scale(1) rotate(0deg);
+}
+
+/* ---------- 6. VOORTGANGSBALKEN als VCR tellers ---------- */
+.itemProgressBar {
+    height: 8px !important;
+    background: #0d0b0a !important;
+    border: 2px solid #444441;
+    border-radius: 0 !important;
+}
+.itemProgressBarForeground {
+    background: var(--vhs-green) !important;
+    border-radius: 0 !important;
+}
+.playedIndicator {
+    background: var(--vhs-green) !important;
+    border: 2px solid var(--vhs-ink);
+    border-radius: 0 !important;
+    color: #1a1a1a !important;
+}
+.countIndicator {
+    background: var(--vhs-amber) !important;
+    border: 2px solid var(--vhs-ink);
+    border-radius: 0 !important;
+    color: #1a1a1a !important;
+}
+
+/* ---------- 7. KNOPPEN ---------- */
+.raised, .emby-button.raised {
+    border-radius: 0 !important;
+    border: var(--vhs-border) solid var(--vhs-ink);
+    box-shadow: 4px 4px 0 var(--vhs-ink);
+    background: var(--vhs-panel);
+    color: var(--vhs-ink);
+    transition: transform .15s, box-shadow .15s;
+    font-weight: 500;
+}
+.raised:hover, .emby-button.raised:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 var(--vhs-pink);
+}
+/* Primaire actie (Afspelen, Opslaan) in VHS rood */
+.button-submit, .raised.button-submit, .btnPlay,
+.detailButton.emby-button[data-action="resume"] {
+    background: var(--vhs-red) !important;
+    color: var(--vhs-ink) !important;
+}
+
+/* ---------- 8. DETAILPAGINA ---------- */
+.detailPagePrimaryContainer { background: transparent; }
+.itemName, .parentName { letter-spacing: -0.01em; }
+.itemMiscInfo .mediaInfoItem, .mediaInfoText {
+    border: 2px solid var(--vhs-ink);
+    background: var(--vhs-amber);
+    color: #1a1a1a !important;
+    border-radius: 0 !important;
+    padding: 1px 7px;
+    font-weight: 500;
+}
+/* Genre links als chips */
+.itemGenres a, .genresList a {
+    border: 2px solid var(--vhs-ink);
+    padding: 2px 8px;
+    color: var(--vhs-ink) !important;
+}
+.itemGenres a:hover, .genresList a:hover {
+    background: var(--vhs-ink);
+    color: var(--vhs-paper) !important;
+}
+
+/* ---------- 9. MENU, DIALOGEN EN INVOERVELDEN ---------- */
+.mainDrawer {
+    background: var(--vhs-paper) !important;
+    border-right: var(--vhs-border) solid var(--vhs-ink);
+}
+.navMenuOption:hover { background: rgba(255, 248, 231, 0.12); }
+.navMenuOption-selected {
+    background: var(--vhs-ink) !important;
+    color: var(--vhs-paper) !important;
+}
+.dialog, .formDialog {
+    background: var(--vhs-paper) !important;
+    border: var(--vhs-border) solid var(--vhs-ink);
+    box-shadow: 8px 8px 0 var(--vhs-ink);
+    border-radius: 0 !important;
+}
+.emby-input, .emby-textarea, .emby-select {
+    border: var(--vhs-border) solid var(--vhs-ink) !important;
+    border-radius: 0 !important;
+    background: var(--vhs-panel) !important;
+    color: var(--vhs-ink) !important;
+}
+.emby-input:focus, .emby-textarea:focus, .emby-select:focus {
+    border-color: var(--vhs-pink) !important;
+}
+.emby-checkbox + span::before { border-radius: 0 !important; }
+
+/* ---------- 10. SCROLLBALK ---------- */
+::-webkit-scrollbar { width: 12px; background: var(--vhs-paper); }
+::-webkit-scrollbar-thumb {
+    background: var(--vhs-panel);
+    border: 2px solid var(--vhs-ink);
+}
+
+/* ---------- 11. SCHALING ---------- */
+/* Jellyfin zet zelf layout-tv / layout-mobile / layout-desktop
+   op de body. De webclient schaalt grotendeels zelf, dit geeft
+   de TV weergave net wat meer lucht en grotere randen. */
+.layout-tv .card .cardBox { box-shadow: 7px 7px 0 var(--vhs-ink); }
+.layout-tv .sectionTitle { font-size: 1.3em; }
+/* Op TV werkt hover niet (afstandsbediening), dus daar doet
+   focus hetzelfde als hover op desktop */
+.layout-tv .card:focus .cardBox, .layout-tv .card .cardBox:focus {
+    transform: rotate(0deg) translate(-4px, -4px) !important;
+    box-shadow: 9px 9px 0 var(--vhs-pink);
+}
+
+/* ---------- 12. LOGIN PAGINA ---------- */
+#loginPage .padded-left.padded-right { background: transparent; }
+#loginPage .raised.block { margin-top: 1em; }
