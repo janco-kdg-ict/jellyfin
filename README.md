@@ -16,6 +16,8 @@ Een neo-brutalist thema voor de Jellyfin webinterface, geinspireerd op een ouder
 
 Updates aan het CSS-bestand in deze repo komen daarna vanzelf bij alle clients terecht (jsDelivr cachet tot ongeveer 12 uur, dus een update kan even op zich laten wachten).
 
+> **Let op:** zet je naast deze regel ook eigen CSS in het veld, dan moet de `@import`-regel helemaal **bovenaan** staan. Een `@import` na andere CSS-regels wordt door browsers genegeerd.
+
 ## Alternatieve installatie (zonder GitHub)
 
 Wil je geen repo gebruiken: open `jellyfin-vhs-thema.css`, kopieer de volledige inhoud en plak die rechtstreeks in hetzelfde Custom CSS veld. Werkt identiek, alleen moet je bij een update opnieuw plakken. Tijdens het tweaken van kleuren is dit juist de handigste methode, want je ziet elke wijziging direct na Ctrl + F5.
@@ -32,6 +34,7 @@ Alle kleuren staan bovenaan `jellyfin-vhs-thema.css` bij elkaar in het `:root` b
 |---|---|---|
 | `--vhs-paper` | achtergrond | donkerpaars-zwart |
 | `--vhs-ink` | randen en tekst | creme |
+| `--vhs-panel` | panelen en kaarten | donkerbruin |
 | `--vhs-red` | play knoppen | VHS rood |
 | `--vhs-pink` | hover accent | roze |
 | `--vhs-green` | voortgangsbalken | VCR groen |
