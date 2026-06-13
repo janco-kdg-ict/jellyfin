@@ -1,0 +1,299 @@
+/* ============================================================
+   ARCANE: POWDER ⇄ JINX  —  Jellyfin webclient thema
+   Versie 1.0 — voor Jellyfin 10.9/10.10
+
+   Eén thema, twee zielen, geïnspireerd op Arcane en op Jinx'
+   dubbele natuur:
+     · POWDER — ingehouden, hextech-blauw, helder
+     · JINX   — chaos, magenta + chemtech-groen, glitch, graffiti
+
+   KIEZEN — drie manieren:
+   1. Niks doen: standaard staat JINX aan.
+   2. Live wisselen: installeer het optionele extras/arcane-toggle.js
+      (zie README) — dat zet een zwevende POWDER ⇄ JINX-knop in de UI.
+   3. Vast op POWDER zonder JS: kopieer de waarden uit het
+      html.arcane-powder-blok hieronder naar het :root-blok.
+
+   Installeren: plak dit in Dashboard > Algemeen > Aangepaste CSS,
+   of via een @import-link. Zie README.md.
+
+   Werkt in de webinterface (browser/desktop/web-apps), niet in
+   native apps met eigen UI (Android TV, Swiftfin).
+   ============================================================ */
+
+/* ---------- PALET: JINX (standaard) ---------- */
+:root {
+    --c-1:  #ff2d78;   /* hoofdaccent: hot magenta */
+    --c-2:  #a6ff2b;   /* chemtech toxic green */
+    --c-3:  #44e0ff;   /* Jinx cyaan */
+    --glow: #ff2d78;
+    --chaos: 1;        /* 1 = volle scheefstand/trilling */
+
+    --bg-0: #060810;   /* diepste achtergrond */
+    --bg-1: #0c1320;   /* panelen, header, drawer */
+    --bg-2: #121c2e;   /* kaarten, inputs */
+    --ink:  #eaf6ff;   /* tekst */
+    --ink-dim: #7e93ad;/* subtiele tekst */
+    --gold: #f5c878;   /* hextech goud, badges */
+    --border: 2px;
+}
+
+/* ---------- PALET-classes voor de live-schakelaar (arcane-toggle.js) ----------
+   De JS zet html.arcane-powder of html.arcane-jinx; deze blokken
+   overschrijven dan het :root-palet. Zonder JS doen ze niets. */
+html.arcane-jinx {
+    --c-1:  #ff2d78; --c-2:  #a6ff2b; --c-3:  #44e0ff; --glow: #ff2d78; --chaos: 1;
+    --bg-0: #060810; --bg-1: #0c1320; --bg-2: #121c2e;
+}
+html.arcane-powder {
+    --c-1:  #4ec5e8; --c-2:  #8a6cff; --c-3:  #6fe3ff; --glow: #4ec5e8; --chaos: .3;
+    --bg-0: #070b14; --bg-1: #0d1626; --bg-2: #132036; --ink-dim: #8ba2bd;
+}
+
+/* ============================================================
+   1. BASIS + sfeer-achtergrond (radiale gloed + hex-raster)
+   ============================================================ */
+html, body, .backgroundContainer, .skinBody {
+    background-color: var(--bg-0) !important;
+    color: var(--ink);
+}
+body, .skinBody {
+    font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif !important;
+}
+/* Sfeerlaag achter alles: chemtech-gloed + subtiel ruitraster */
+.backgroundContainer::before {
+    content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(40% 50% at 18% 16%, color-mix(in srgb, var(--c-1) 22%, transparent), transparent 70%),
+      radial-gradient(45% 55% at 84% 78%, color-mix(in srgb, var(--c-2) 16%, transparent), transparent 70%),
+      radial-gradient(60% 60% at 50% 50%, color-mix(in srgb, var(--c-3) 8%, transparent), transparent 75%);
+    filter: blur(40px);
+    animation: arc-glow 24s ease-in-out infinite alternate;
+}
+@keyframes arc-glow {
+    0%   { transform: translate(-2%, -1%) scale(1.05); }
+    100% { transform: translate(3%, 2%) scale(1.14); }
+}
+.backgroundContainer::after {
+    content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-image:
+      linear-gradient(transparent calc(100% - 1px), color-mix(in srgb, var(--c-3) 10%, transparent) 100%),
+      linear-gradient(90deg, transparent calc(100% - 1px), color-mix(in srgb, var(--c-3) 10%, transparent) 100%);
+    background-size: 46px 46px;
+    mask-image: radial-gradient(circle at 50% 35%, #000, transparent 80%);
+    opacity: .5;
+}
+/* Backdrops dempen zodat de neon-look domineert */
+.backdropImage, .backgroundContainer.withBackdrop { opacity: .18 !important; }
+
+/* ============================================================
+   2. HEADER + glitchende paginatitel
+   ============================================================ */
+.skinHeader, .skinHeader-withBackground {
+    background: linear-gradient(to bottom, color-mix(in srgb, var(--bg-0) 88%, transparent), transparent) !important;
+    border-bottom: var(--border) solid color-mix(in srgb, var(--c-1) 40%, transparent);
+    backdrop-filter: blur(10px);
+}
+/* Chromatische-aberratie glitch op de paginatitel */
+@keyframes arc-chroma {
+    0%, 90%, 100% { text-shadow: 2px 0 0 var(--c-1), -2px 0 0 var(--c-3); }
+    92% { text-shadow: calc(-3px * var(--chaos)) 0 0 var(--c-1), calc(3px * var(--chaos)) 0 0 var(--c-3); transform: translateX(calc(1px * var(--chaos))); }
+    94% { text-shadow: calc(3px * var(--chaos)) 1px 0 var(--c-2), calc(-3px * var(--chaos)) -1px 0 var(--c-3); }
+    96% { text-shadow: calc(-2px * var(--chaos)) 0 0 var(--c-1), calc(2px * var(--chaos)) 0 0 var(--c-2); }
+}
+.pageTitle {
+    animation: arc-chroma 5s linear infinite;
+    letter-spacing: .08em; font-weight: 800; text-transform: uppercase;
+}
+/* Tabbladen als afgeschuinde neon-knoppen */
+.emby-tab-button {
+    color: var(--ink-dim); font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+    border: var(--border) solid transparent; border-radius: 0;
+    clip-path: polygon(8% 0, 100% 0, 92% 100%, 0 100%);
+    transition: color .2s, transform .15s, background .2s;
+}
+.emby-tab-button:hover { color: var(--ink); transform: translateY(-2px); }
+.emby-tab-button-active, .emby-tab-button.emby-tab-button-active {
+    color: var(--bg-0) !important; background: var(--c-1) !important; border-radius: 0;
+    box-shadow: 0 0 18px color-mix(in srgb, var(--c-1) 65%, transparent);
+}
+.emby-tab-button-active .emby-button-foreground { color: var(--bg-0); }
+
+/* ============================================================
+   3. SECTIETITELS als spuitbus-tags
+   ============================================================ */
+.sectionTitle {
+    display: inline-block; transform: skewX(-8deg);
+    padding: .12em .5em; font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--ink);
+    background: linear-gradient(90deg, color-mix(in srgb, var(--c-1) 30%, transparent), transparent);
+    border-left: 4px solid var(--c-1);
+}
+
+/* ============================================================
+   4. KAARTEN: hextech-posters met glitch-hover en graffiti
+   ============================================================ */
+.cardBox { border-radius: 0 !important; background: transparent; }
+.cardImageContainer, .cardContent { border-radius: 0 !important; }
+.card .cardBox {
+    border: var(--border) solid color-mix(in srgb, var(--c-3) 22%, transparent);
+    background: var(--bg-2);
+    transition: transform .3s cubic-bezier(.34,1.56,.64,1), box-shadow .3s, border-color .3s;
+}
+/* Lichte chaos: kaarten staan een tikje scheef (schaalt met --chaos) */
+.card:nth-child(3n)   .cardBox { transform: rotate(calc(-1.1deg * var(--chaos))); }
+.card:nth-child(3n+1) .cardBox { transform: rotate(calc( 0.9deg * var(--chaos))); }
+.card:nth-child(3n+2) .cardBox { transform: rotate(calc(-0.4deg * var(--chaos))); }
+/* Hover/focus: rechttrekken, opspringen, dubbele neon-schaduw + glitch */
+.card:hover .cardBox, .card:focus-within .cardBox {
+    transform: rotate(0) translateY(-8px) scale(1.04) !important;
+    border-color: var(--c-1);
+    box-shadow: 0 14px 40px color-mix(in srgb, var(--glow) 55%, transparent),
+                6px 6px 0 var(--c-2);
+}
+@keyframes arc-card-glitch {
+    0%   { filter: none; }
+    30%  { filter: hue-rotate(40deg) saturate(1.6); }
+    60%  { filter: hue-rotate(-30deg); }
+    100% { filter: none; }
+}
+.card:hover .cardImageContainer { animation: arc-card-glitch .4s steps(2) 1; }
+.cardText { color: var(--ink); font-weight: 700; }
+.cardText-secondary { color: var(--c-3) !important; letter-spacing: .1em; text-transform: uppercase; font-size: .72em; }
+
+/* Play-overlay knop: hextech-ruit die indraait */
+.cardOverlayButton, .cardOverlayFab-primary {
+    background: var(--c-1) !important; color: var(--bg-0) !important;
+    border: var(--border) solid var(--ink) !important; border-radius: 0 !important;
+    transform: scale(0) rotate(45deg);
+    box-shadow: 0 0 20px var(--glow);
+    transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+.card:hover .cardOverlayButton, .card:hover .cardOverlayFab-primary {
+    transform: scale(1) rotate(0deg);
+}
+
+/* ============================================================
+   5. VOORTGANGSBALKEN + indicatoren (chemtech-gloed)
+   ============================================================ */
+.itemProgressBar {
+    height: 6px !important; background: #05070d !important;
+    border: 1px solid color-mix(in srgb, var(--c-3) 40%, transparent); border-radius: 0 !important;
+}
+.itemProgressBarForeground {
+    background: var(--c-2) !important; border-radius: 0 !important;
+    box-shadow: 0 0 8px var(--c-2);
+}
+.playedIndicator {
+    background: var(--c-2) !important; color: var(--bg-0) !important;
+    border: 1px solid var(--ink); border-radius: 0 !important;
+}
+.countIndicator {
+    background: var(--gold) !important; color: var(--bg-0) !important;
+    border: 1px solid var(--ink); border-radius: 0 !important;
+}
+
+/* ============================================================
+   6. KNOPPEN
+   ============================================================ */
+.raised, .emby-button.raised {
+    border-radius: 0 !important; border: var(--border) solid color-mix(in srgb, var(--c-1) 60%, transparent);
+    background: var(--bg-2); color: var(--ink); font-weight: 700; letter-spacing: .08em;
+    clip-path: polygon(5% 0, 100% 0, 95% 100%, 0 100%);
+    transition: transform .15s, box-shadow .25s, background .2s;
+}
+.raised:hover, .emby-button.raised:hover {
+    transform: translateY(-3px) skewX(-3deg);
+    box-shadow: 0 6px 26px var(--glow);
+    border-color: var(--c-1);
+}
+/* Primaire actie (Afspelen, Opslaan, Resume) in hoofdaccent */
+.button-submit, .raised.button-submit, .btnPlay,
+.detailButton.emby-button[data-action="resume"] {
+    background: var(--c-1) !important; color: var(--bg-0) !important;
+    box-shadow: 0 0 18px color-mix(in srgb, var(--glow) 55%, transparent);
+}
+
+/* ============================================================
+   7. DETAILPAGINA
+   ============================================================ */
+.detailPagePrimaryContainer { background: transparent; }
+.itemName, .parentName { letter-spacing: -.01em; text-transform: uppercase; }
+.itemMiscInfo .mediaInfoItem, .mediaInfoText {
+    border: 1.5px solid color-mix(in srgb, var(--c-3) 50%, transparent);
+    background: color-mix(in srgb, var(--bg-1) 80%, transparent);
+    color: var(--c-3) !important; border-radius: 0 !important;
+    padding: 1px 8px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+}
+/* Genre-links als chips (selector geverifieerd voor 10.10) */
+.itemGenres a, .genresGroup .genres a {
+    border: 1.5px solid color-mix(in srgb, var(--c-1) 60%, transparent);
+    padding: 2px 9px; color: var(--ink) !important; transition: all .2s;
+}
+.itemGenres a:hover, .genresGroup .genres a:hover {
+    background: var(--c-1); color: var(--bg-0) !important;
+    box-shadow: 0 0 14px var(--glow);
+}
+
+/* ============================================================
+   8. MENU, DIALOGEN, INVOERVELDEN
+   ============================================================ */
+.mainDrawer {
+    background: var(--bg-1) !important;
+    border-right: var(--border) solid color-mix(in srgb, var(--c-1) 40%, transparent);
+}
+.navMenuOption:hover { background: color-mix(in srgb, var(--c-1) 12%, transparent); }
+.navMenuOption-selected {
+    background: var(--c-1) !important; color: var(--bg-0) !important;
+    box-shadow: inset 4px 0 0 var(--c-2);
+}
+.dialog, .formDialog {
+    background: var(--bg-1) !important;
+    border: var(--border) solid var(--c-1);
+    box-shadow: 0 0 50px color-mix(in srgb, var(--glow) 35%, transparent), 8px 8px 0 var(--c-2);
+    border-radius: 0 !important;
+}
+.emby-input, .emby-textarea, .emby-select {
+    border: var(--border) solid color-mix(in srgb, var(--c-3) 40%, transparent) !important;
+    border-radius: 0 !important; background: var(--bg-2) !important; color: var(--ink) !important;
+}
+.emby-input:focus, .emby-textarea:focus, .emby-select:focus {
+    border-color: var(--c-1) !important;
+    box-shadow: 0 0 14px color-mix(in srgb, var(--glow) 45%, transparent);
+}
+.checkboxOutline { border-radius: 0 !important; }
+
+/* ============================================================
+   9. SCROLLBALK
+   ============================================================ */
+::-webkit-scrollbar { width: 12px; height: 10px; background: var(--bg-0); }
+::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--c-1) 55%, transparent);
+    border: 2px solid var(--bg-0);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--c-1); }
+
+/* ============================================================
+   10. TV-LAYOUT (focus = hover, want geen muis)
+   ============================================================ */
+.layout-tv .card:focus .cardBox, .layout-tv .card .cardBox:focus {
+    transform: rotate(0) translateY(-6px) scale(1.05) !important;
+    border-color: var(--c-1);
+    box-shadow: 0 14px 40px color-mix(in srgb, var(--glow) 55%, transparent), 6px 6px 0 var(--c-2);
+}
+.layout-tv .sectionTitle { font-size: 1.3em; }
+
+/* ============================================================
+   11. LOGIN
+   ============================================================ */
+#loginPage .padded-left.padded-right { background: transparent; }
+#loginPage .raised.block { margin-top: 1em; }
+
+/* ============================================================
+   12. TOEGANKELIJKHEID
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+    .pageTitle, .backgroundContainer::before, .card:hover .cardImageContainer {
+        animation: none !important;
+    }
+}
