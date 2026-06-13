@@ -2,6 +2,8 @@
 
 Een neo-brutalist thema voor de Jellyfin webinterface, geinspireerd op een ouderwetse videotheek: scheve posterhoezen met harde blokschaduwen, een rode play-sticker die met een bounce indraait, VCR-groene voortgangsbalken, scheve sectielabels en een glitchende paginatitel.
 
+> **Meer thema's in deze repo:** [Arcane: Powder ⇄ Jinx](themes/arcane-jinx/) — een neon hextech/chemtech-thema met een live schakelaar tussen een kalme (Powder) en een chaotische (Jinx) modus.
+
 ## Snelle installatie (aanbevolen: via link)
 
 1. Open je Jellyfin webinterface als beheerder
