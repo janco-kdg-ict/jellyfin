@@ -18,38 +18,56 @@
 
 /* ---------- Kleur-DNA. De toggle swapt alleen deze waarden ---------- */
 :root {
-  --bg-0: #060810;          /* diepste achtergrond */
-  --bg-1: #0c1320;          /* panelen */
-  --bg-2: #121c2e;          /* kaarten */
-  --ink:  #eaf6ff;          /* tekst */
-  --ink-dim: #7e93ad;       /* subtiele tekst */
-  --hex-gold: #f5c878;      /* hextech goud, accent in beide modi */
-
+  --hex-gold: #f5c878;      /* accent in beide modi */
   --speed: 1;               /* globale animatiesnelheid-factor */
   --chaos: 1;               /* hoeveel alles trilt/scheef staat */
   --grain: 0.05;            /* filmkorrel sterkte */
+  --neon: 1;                /* sterkte van de neon-gloed */
 }
 
-/* POWDER: ingehouden, hextech-blauw, recht en helder */
+/* POWDER: de stilte voor de storm. Kalm, hextech-blauw, strak,
+   bijna geen gloed. Niet "graffiti" maar een schone blueprint-look. */
 html.mode-powder {
-  --c-1: #4ec5e8;           /* hoofdkleur cyaan */
-  --c-2: #8a6cff;           /* hextech violet */
-  --c-3: #6fe3ff;           /* licht ijsblauw */
-  --glow: #4ec5e8;
-  --chaos: 0.25;
-  --speed: 0.7;
-  --grain: 0.03;
+  --c-1: #5cc8f5;           /* zacht hextech cyaan */
+  --c-2: #9b8cff;           /* hextech violet */
+  --c-3: #bfeeff;           /* ijsblauw */
+  --glow: #5cc8f5;
+  --bg-0: #0a1322;          /* diep nachtblauw, niet zwart */
+  --bg-1: #102036;
+  --bg-2: #16294a;
+  --ink:  #eef6ff;
+  --ink-dim: #93accb;
+  --chaos: 0.18;
+  --speed: 0.65;
+  --grain: 0.02;
+  --neon: 0.3;
 }
 
-/* JINX: chaos, magenta + giftig chemtech-groen */
+/* JINX: good in the dark. Neon-graffiti die GLOEIT op bijna-zwart,
+   zuurgroen als ster + hot pink, electric cyaan als vonk.
+   (K/DA Akali energie: spuitbus, drips, flikkerend neonbord.) */
 html.mode-jinx {
-  --c-1: #ff2d78;           /* hot magenta */
-  --c-2: #a6ff2b;           /* chemtech toxic green */
-  --c-3: #44e0ff;           /* Jinx cyaan vlechten */
-  --glow: #ff2d78;
+  --c-1: #b6ff1a;           /* acid neon green — de ster */
+  --c-2: #ff1f8f;           /* hot pink */
+  --c-3: #18f0ff;           /* electric cyaan */
+  --glow: #b6ff1a;
+  --bg-0: #050706;          /* bijna zwart, lichte groenzweem */
+  --bg-1: #0a0e0c;
+  --bg-2: #0e1411;
+  --ink:  #f1ffe6;
+  --ink-dim: #7e9476;
   --chaos: 1;
   --speed: 1.15;
-  --grain: 0.07;
+  --grain: 0.06;
+  --neon: 1;
+}
+
+/* Herbruikbare neon-tekstgloed (schaalt met --neon en --glow) */
+.neon {
+  text-shadow:
+    0 0 calc(4px * var(--neon)) var(--glow),
+    0 0 calc(11px * var(--neon)) var(--glow),
+    0 0 calc(26px * var(--neon)) color-mix(in srgb, var(--glow) 70%, transparent);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -138,6 +156,23 @@ body {
 @keyframes grain {
   0%{transform:translate(0,0)} 33%{transform:translate(-5%,3%)} 66%{transform:translate(4%,-4%)} 100%{transform:translate(0,0)}
 }
+/* Spuitbus-splatter: verspreide neon-spetters, sterk in Jinx */
+.bg-spray {
+  position: absolute; inset: 0;
+  background-image:
+    radial-gradient(circle at 12% 22%, color-mix(in srgb, var(--c-1) 60%, transparent) 0, transparent 4px),
+    radial-gradient(circle at 18% 30%, color-mix(in srgb, var(--c-1) 40%, transparent) 0, transparent 2px),
+    radial-gradient(circle at 84% 18%, color-mix(in srgb, var(--c-2) 55%, transparent) 0, transparent 5px),
+    radial-gradient(circle at 78% 26%, color-mix(in srgb, var(--c-2) 35%, transparent) 0, transparent 2px),
+    radial-gradient(circle at 66% 72%, color-mix(in srgb, var(--c-1) 45%, transparent) 0, transparent 4px),
+    radial-gradient(circle at 30% 82%, color-mix(in srgb, var(--c-3) 45%, transparent) 0, transparent 3px),
+    radial-gradient(circle at 92% 64%, color-mix(in srgb, var(--c-1) 35%, transparent) 0, transparent 2px),
+    radial-gradient(circle at 50% 12%, color-mix(in srgb, var(--c-2) 30%, transparent) 0, transparent 2px);
+  filter: blur(.3px) drop-shadow(0 0 4px var(--glow));
+  opacity: calc(.6 * var(--neon));
+  animation: spray-flick calc(7s / var(--speed)) steps(1) infinite;
+}
+@keyframes spray-flick { 0%,96%,100%{opacity: calc(.6 * var(--neon));} 97%{opacity: calc(.2 * var(--neon));} 98%{opacity: calc(.75 * var(--neon));} }
 
 /* ===========================================================
    APP-LAAG
@@ -159,7 +194,15 @@ header {
   position: relative; cursor: pointer; user-select: none;
   text-transform: uppercase; padding-right: .2em;
 }
-.logo .glitch { position: relative; display: inline-block; color: var(--ink); }
+.logo .glitch {
+  position: relative; display: inline-block; color: var(--ink);
+  text-shadow: 0 0 calc(6px * var(--neon)) var(--glow), 0 0 calc(16px * var(--neon)) var(--glow);
+  animation: neon-flick calc(6s / var(--speed)) steps(1) infinite;
+}
+@keyframes neon-flick {
+  0%,92%,100%{ opacity: 1; }
+  93%{ opacity: .4; } 94%{ opacity: 1; } 95%{ opacity: .55; } 96%{ opacity: 1; }
+}
 .logo .glitch::before, .logo .glitch::after {
   content: attr(data-t); position: absolute; left: 0; top: 0; width: 100%;
   overflow: hidden;
@@ -242,15 +285,29 @@ html.mode-jinx .toggle .knob { left: 31px; }
 }
 @keyframes hazard { to { background-position: 40px 0; } }
 .hero-tag {
-  display: inline-block; font-size: .66rem; font-weight: 800; letter-spacing: .32em;
+  display: inline-block; position: relative; font-size: .66rem; font-weight: 800; letter-spacing: .32em;
   color: var(--bg-0); background: var(--c-2); padding: .25rem .7rem;
-  transform: rotate(-2deg); margin-bottom: 1rem;
-  box-shadow: 3px 3px 0 var(--bg-0);
+  transform: rotate(-2deg); margin-bottom: 1.4rem;
+  box-shadow: 3px 3px 0 var(--bg-0), 0 0 calc(16px * var(--neon)) color-mix(in srgb, var(--c-2) 80%, transparent);
+}
+/* Druppels onder de tag */
+.hero-tag::after {
+  content: ""; position: absolute; left: 6px; right: 6px; top: 100%; height: 11px;
+  background: var(--c-2);
+  -webkit-mask: radial-gradient(6px 8px at 9px 0, #000 96%, transparent) 0 0/20px 11px repeat-x;
+          mask: radial-gradient(6px 8px at 9px 0, #000 96%, transparent) 0 0/20px 11px repeat-x;
+  opacity: var(--neon); filter: drop-shadow(0 0 4px var(--c-2));
 }
 .hero h1 {
   font-size: clamp(2.4rem, 6vw, 4.6rem); line-height: .92; font-weight: 800;
   text-transform: uppercase; letter-spacing: -.01em; max-width: 14ch;
   position: relative;
+  color: color-mix(in srgb, var(--ink) calc(100% - 70% * var(--neon)), transparent);
+  -webkit-text-stroke: calc(1.4px * var(--neon)) var(--c-1);
+  text-shadow:
+    0 0 calc(7px * var(--neon)) var(--glow),
+    0 0 calc(20px * var(--neon)) var(--glow),
+    0 0 calc(44px * var(--neon)) color-mix(in srgb, var(--glow) 60%, transparent);
 }
 /* Chromatische aberratie op de titel */
 .hero h1 .ab { position: relative; display: inline-block; }
@@ -281,7 +338,8 @@ html.mode-jinx .toggle .knob { left: 31px; }
   font-size: 1rem; color: var(--bg-0); cursor: pointer;
   background: var(--c-1); border: none; padding: .9rem 1.6rem;
   clip-path: polygon(6% 0, 100% 0, 94% 100%, 0 100%);
-  position: relative; box-shadow: 0 0 0 0 var(--glow);
+  position: relative;
+  box-shadow: 0 0 calc(20px * var(--neon)) color-mix(in srgb, var(--glow) 70%, transparent);
   transition: box-shadow .25s, transform .15s, background .3s;
 }
 .btn-play:hover { transform: translateY(-3px) skewX(-3deg); box-shadow: 0 6px 30px var(--glow); }
@@ -323,6 +381,16 @@ html.mode-jinx .toggle .knob { left: 31px; }
   padding: .15em .5em; transform: skewX(-8deg);
   background: linear-gradient(90deg, color-mix(in srgb, var(--c-1) 30%, transparent), transparent);
   border-left: 4px solid var(--c-1);
+  box-shadow: -4px 0 calc(14px * var(--neon)) -2px var(--glow);
+  text-shadow: 0 0 calc(7px * var(--neon)) color-mix(in srgb, var(--glow) 80%, transparent);
+}
+/* Verfdruppel die onder het label hangt */
+.section-head h2::after {
+  content: ""; position: absolute; left: 0; right: 35%; top: 100%; height: 13px;
+  background: var(--c-1);
+  -webkit-mask: radial-gradient(7px 9px at 11px 0, #000 97%, transparent) 0 0/24px 13px repeat-x;
+          mask: radial-gradient(7px 9px at 11px 0, #000 97%, transparent) 0 0/24px 13px repeat-x;
+  opacity: var(--neon); filter: drop-shadow(0 0 5px var(--glow));
 }
 .section-head .count { color: var(--ink-dim); font-size: .72rem; letter-spacing: .2em; }
 
@@ -338,9 +406,10 @@ html.mode-jinx .toggle .knob { left: 31px; }
 
 .card {
   scroll-snap-align: start; position: relative; cursor: pointer;
-  background: var(--bg-2); border: 2px solid color-mix(in srgb, var(--c-3) 22%, transparent);
+  background: var(--bg-2); border: 2px solid color-mix(in srgb, var(--c-1) 30%, transparent);
   aspect-ratio: 2/3; overflow: hidden;
   transform: rotate(calc(var(--tilt) * var(--chaos)));
+  box-shadow: inset 0 0 calc(20px * var(--neon)) color-mix(in srgb, var(--glow) 18%, transparent);
   transition: transform .3s cubic-bezier(.34,1.56,.64,1), box-shadow .3s, border-color .3s;
 }
 .card:nth-child(3n)   { --tilt: -1.3deg; }
@@ -520,6 +589,7 @@ html.mode-jinx .toggle .knob { left: 31px; }
 <div class="bg">
   <div class="bg-glow"></div>
   <div class="bg-grid"></div>
+  <div class="bg-spray"></div>
   <div class="motes" id="motes"></div>
   <div class="bg-scan"></div>
   <div class="bg-grain"></div>

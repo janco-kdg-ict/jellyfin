@@ -2,10 +2,10 @@
 
 Eén thema, twee zielen. Geïnspireerd op Arcane en op Jinx' dubbele natuur:
 
-- **Powder** — ingehouden, hextech-blauw, helder en strak
-- **Jinx** — chaos: hot magenta + giftig chemtech-groen, glitch, scheve posters, graffiti
+- **Jinx** — *good in the dark*: zuurgroen neon-graffiti + hot pink op bijna-zwart, met gloeiend neon, verfdruppels, een flikkerende neonbord-titel en scheve posters. (K/DA Akali energie.)
+- **Powder** — de stilte voor de storm: kalm hextech-blauw, strak en helder, bijna geen gloed.
 
-Geen plaatje-op-de-achtergrond cliché, maar een systematische neon-brutalist look: een levende chemtech-gloed met hex-raster achter alles, een glitchende paginatitel met chromatische aberratie, hextech-ruiten op de posters, afgeschuinde neon-knoppen, en hover-effecten met spuitbus-flits. Werkt als een serieuze, leesbare dark theme — maar met houding.
+Geen plaatje-op-de-achtergrond cliché, maar een systematische neon-graffiti look: spuitbus-spetters en een hex-raster achter alles, een paginatitel die als een kapot neonbord flikkert en gloeit, hextech-ruiten op de posters, afgeschuinde neon-knoppen die oplichten, en sectielabels met verfdruppels eronder. Werkt als een serieuze, leesbare dark theme — maar met houding.
 
 | Jinx | Powder |
 |---|---|
@@ -73,15 +73,16 @@ Alle kleuren staan bovenaan `jellyfin-arcane-jinx.css` in het `:root`-blok:
 
 | Variabele | Doet |
 |---|---|
-| `--c-1` | hoofdaccent (Jinx: magenta) — knoppen, borders, gloed |
-| `--c-2` | tweede accent (Jinx: chemtech-groen) — voortgang, schaduwen |
-| `--c-3` | derde accent (Jinx: cyaan) — subtekst, randen |
+| `--c-1` | hoofdaccent (Jinx: zuurgroen) — knoppen, borders, gloed |
+| `--c-2` | tweede accent (Jinx: hot pink) — tags, schaduwen |
+| `--c-3` | derde accent (Jinx: electric cyaan) — subtekst, randen |
 | `--glow` | kleur van de neon-gloed |
+| `--neon` | sterkte van de gloed (`0` = uit, `1` = vol Jinx) |
 | `--chaos` | hoe scheef/wild alles staat (`0` = recht en kalm, `1` = vol Jinx) |
 | `--bg-0/1/2` | achtergrond, panelen, kaarten |
 | `--ink` / `--ink-dim` | tekst en subtiele tekst |
 
-Tip: zet `--chaos` op `0.3` voor een rustigere versie met dezelfde kleuren.
+Tip: zet `--chaos` en `--neon` lager (bv. `0.4`) voor een ingetogener versie met dezelfde kleuren.
 
 ## Wat zit er in deze map
 
